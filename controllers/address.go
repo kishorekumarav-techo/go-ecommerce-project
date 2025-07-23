@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+
 func AddAddress() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user_id := c.Query("id")
@@ -132,6 +133,8 @@ func EditWorkAddress() gin.HandlerFunc {
 		c.IndentedJSON(200, "Successfully updated the Work Address")
 	}
 }
+
+
 
 func DeleteAddress() gin.HandlerFunc {
 	return func(c *gin.Context) {
