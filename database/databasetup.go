@@ -1,6 +1,5 @@
 package database
 
-//
 import (
 	"context"
 	"fmt"
@@ -11,36 +10,45 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func DBSet() *mongo.Client {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://development:testpassword@localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+const (
+	mongoURI     = "mongodb://development:testpassword@localhost:27017"
+	databaseName = "Ecommerce"
+	connectTimeout = 10 * time.Second
+)
+
+// DBConnect initializes and returns a MongoDB client.
+func DBConnect() *mongo.Client {
+	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
-	err = client.Connect(ctx)
+
+	clientOptions := options.Client().ApplyURI(mongoURI)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("MongoDB connection error: %v", err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Println("failed to connect to mongodb")
-		return nil
+	// Ping the database to verify the connection
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatalf("Failed to ping MongoDB: %v", err)
 	}
-	fmt.Println("Successfully Connected to the mongodb")
+
+	fmt.Println("✅ Successfully connected to MongoDB")
 	return client
 }
 
-var Client *mongo.Client = DBSet()
+// Global MongoDB client instance
+var Client *mongo.Client = DBConnect()
 
-func UserData(client *mongo.Client, CollectionName string) *mongo.Collection {
-	var collection *mongo.Collection = client.Database("Ecommerce").Collection(CollectionName)
-	return collection
-
+// GetCollection returns a handle to a MongoDB collection in the "Ecommerce" database.
+func GetCollection(collectionName string) *mongo.Collection {
+	return Client.Database(databaseName).Collection(collectionName)
 }
 
-func ProductData(client *mongo.Client, CollectionName string) *mongo.Collection {
-	var productcollection *mongo.Collection = client.Database("Ecommerce").Collection(CollectionName)
-	return productcollection
+// Optional convenience wrappers for specific collections (if needed)
+func UserCollection() *mongo.Collection {
+	return GetCollection("Users")
+}
+
+func ProductCollection() *mongo.Collection {
+	return GetCollection("Products")
 }
